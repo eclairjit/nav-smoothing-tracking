@@ -110,8 +110,8 @@ where coefficients are computed to ensure:
 
 **Phases**:
 
-1. **Acceleration**: v(t) = a\*t (until v_max or midpoint)
-2. **Cruise**: v(t) = v_max (if path is long enough)
+1. **Acceleration**: $$v(t) = a\*t$$ (until v_max or midpoint)
+2. **Cruise**: $$v(t) = v_max$$ (if path is long enough)
 3. **Deceleration**: $$v(t) = v_max - a*t$$ (until stop)
 
 **Features**:
@@ -130,8 +130,8 @@ where coefficients are computed to ensure:
 **Control Strategy**:
 
 1. Pure Pursuit: Find look-ahead point on trajectory
-2. Calculate angular error: θ_error = atan2(Δy, Δx) - θ_robot
-3. PID Control: ω = Kp*e + Ki*∫e + Kd\*de/dt
+2. Calculate angular error: $$θ_error = atan2(Δy, Δx) - θ_robot$$
+3. PID Control: $$ω = Kp*e + Ki*∫e + Kd\*de/dt$$
 4. Speed adaptation: v = $$v_target * (1 - |θ_error|/π)$$
 5. Differential drive: $$v_L = v - ω*L/2, v_R = v + ω*L/2$$
 
