@@ -86,20 +86,21 @@ python main.py --max-velocity 1.5 --look-ahead 0.8
 **Algorithm**: Natural Cubic Spline Interpolation
 
 **Implementation Highlights**:
+
 - Solves tridiagonal system using Thomas algorithm
 - Natural boundary conditions (zero second derivative at endpoints)
 - Arc-length parameterization for uniform sampling
 - O(n) time complexity after coefficient computation
 
 **Mathematical Foundation**:
-```
+
 For each segment i, the spline S_i(x) is defined as:
-S_i(x) = a_i + b_i(x - x_i) + c_i(x - x_i)² + d_i(x - x_i)³
+$$S_i(x) = a_i + b_i(x - x_i) + c_i(x - x_i)² + d_i(x - x_i)³$$
 
 where coefficients are computed to ensure:
+
 - C² continuity at all interior points
 - Natural boundary conditions at endpoints
-```
 
 **Key Files**: `src/path_smoother.py`
 
@@ -108,11 +109,13 @@ where coefficients are computed to ensure:
 **Algorithm**: Trapezoidal Velocity Profile
 
 **Phases**:
-1. **Acceleration**: v(t) = a*t (until v_max or midpoint)
+
+1. **Acceleration**: v(t) = a\*t (until v_max or midpoint)
 2. **Cruise**: v(t) = v_max (if path is long enough)
-3. **Deceleration**: v(t) = v_max - a*t (until stop)
+3. **Deceleration**: $$v(t) = v_max - a*t$$ (until stop)
 
 **Features**:
+
 - Time-optimal trajectory generation
 - Respects velocity and acceleration constraints
 - Smooth transitions between phases
@@ -125,15 +128,15 @@ where coefficients are computed to ensure:
 **Algorithm**: Pure Pursuit + PID
 
 **Control Strategy**:
-```
+
 1. Pure Pursuit: Find look-ahead point on trajectory
 2. Calculate angular error: θ_error = atan2(Δy, Δx) - θ_robot
-3. PID Control: ω = Kp*e + Ki*∫e + Kd*de/dt
-4. Speed adaptation: v = v_target * (1 - |θ_error|/π)
-5. Differential drive: v_L = v - ω*L/2, v_R = v + ω*L/2
-```
+3. PID Control: ω = Kp*e + Ki*∫e + Kd\*de/dt
+4. Speed adaptation: v = $$v_target * (1 - |θ_error|/π)$$
+5. Differential drive: $$v_L = v - ω*L/2, v_R = v + ω*L/2$$
 
 **Tuning Parameters**:
+
 - `look_ahead_distance`: 0.3-1.0m (larger = smoother, smaller = more accurate)
 - `k_p`: 1.5-3.0 (proportional gain)
 - `k_d`: 0.3-1.0 (derivative gain for damping)
@@ -146,11 +149,10 @@ where coefficients are computed to ensure:
 **Model**: Differential Drive Kinematics
 
 **State Update Equations**:
-```
-x(t+1) = x(t) + v*cos(θ)*dt
-y(t+1) = y(t) + v*sin(θ)*dt
-θ(t+1) = θ(t) + ω*dt
-```
+
+$$x(t+1) = x(t) + v*cos(θ)*dt$$
+$$y(t+1) = y(t) + v*sin(θ)*dt$$
+$$θ(t+1) = θ(t) + ω*dt$$
 
 **Key Files**: `src/simulator.py`
 
@@ -221,12 +223,14 @@ controller = DifferentialDriveController(
 ### Modular Design
 
 **Separation of Concerns**:
+
 - **Path Smoother**: Pure mathematical interpolation (no dependencies)
 - **Trajectory Generator**: Kinematic planning (depends only on geometry)
 - **Controller**: Control logic (no simulation coupling)
 - **Simulator**: Physics engine (independent of control)
 
 **Benefits**:
+
 - Easy to test each component independently
 - Simple to swap implementations
 - Clear interfaces between modules
@@ -253,15 +257,15 @@ controller = DifferentialDriveController(
 ```python
 class RobotHardwareInterface:
     """Abstract interface for real robot hardware"""
-    
+
     def get_odometry(self) -> RobotState:
         """Read current robot state from sensors"""
         pass
-    
+
     def send_velocity_command(self, control: ControlCommand):
         """Send velocity commands to motor controllers"""
         pass
-    
+
     def emergency_stop(self):
         """Emergency stop command"""
         pass
@@ -278,25 +282,25 @@ from nav_msgs.msg import Odometry
 class TrajectoryFollowerNode(Node):
     def __init__(self):
         super().__init__('trajectory_follower')
-        
+
         # Create controller
         self.controller = DifferentialDriveController()
-        
+
         # Publishers
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        
+
         # Subscribers
         self.odom_sub = self.create_subscription(
             Odometry, '/odom', self.odom_callback, 10
         )
-        
+
         # Timer for control loop
         self.create_timer(0.05, self.control_loop)
-    
+
     def control_loop(self):
         control = self.controller.compute_control(
-            self.robot_state, 
-            self.trajectory, 
+            self.robot_state,
+            self.trajectory,
             0.05
         )
         self.publish_cmd_vel(control)
@@ -305,21 +309,23 @@ class TrajectoryFollowerNode(Node):
 ### Sensor Integration
 
 **Required Sensors**:
+
 1. **Odometry**: Wheel encoders or IMU + wheel encoders
 2. **Localization**: LIDAR, cameras, or GPS for absolute positioning
 3. **Safety**: Bumpers, cliff sensors, emergency stop button
 
 **Sensor Fusion**:
+
 ```python
 from filterpy.kalman import ExtendedKalmanFilter
 
 class StateEstimator:
     """Fuses multiple sensor readings for robust state estimation"""
-    
+
     def __init__(self):
         self.ekf = ExtendedKalmanFilter(dim_x=3, dim_z=2)
         # Configure EKF for robot state estimation
-    
+
     def update(self, odom, lidar_pose):
         """Fuse odometry and LIDAR measurements"""
         self.ekf.predict()
@@ -332,20 +338,20 @@ class StateEstimator:
 ```python
 class SafetyMonitor:
     """Monitors robot state and environment for safety"""
-    
+
     def check_velocity_limits(self, control: ControlCommand) -> bool:
         """Ensure velocity commands are within safe limits"""
         return (abs(control.linear) <= self.max_linear and
                 abs(control.angular) <= self.max_angular)
-    
+
     def check_trajectory_collision(self, trajectory, obstacles) -> bool:
         """Check if trajectory collides with obstacles"""
         # Implement collision checking
         pass
-    
+
     def emergency_stop_conditions(self) -> bool:
         """Check if emergency stop is needed"""
-        return (self.battery_low or 
+        return (self.battery_low or
                 self.obstacle_too_close or
                 self.communication_lost)
 ```
@@ -360,17 +366,17 @@ class DynamicWindowApproach:
     Real-time obstacle avoidance using Dynamic Window Approach.
     Evaluates possible velocity commands and selects the best one.
     """
-    
+
     def __init__(self, max_vel, max_accel):
         self.max_vel = max_vel
         self.max_accel = max_accel
-    
+
     def compute_dynamic_window(self, current_vel, dt):
         """Compute set of reachable velocities"""
         v_min = max(0, current_vel - self.max_accel * dt)
         v_max = min(self.max_vel, current_vel + self.max_accel * dt)
         return (v_min, v_max)
-    
+
     def evaluate_trajectory(self, vel, obstacles, target):
         """
         Score a candidate velocity based on:
@@ -381,18 +387,18 @@ class DynamicWindowApproach:
         clearance_score = self.compute_clearance(vel, obstacles)
         goal_score = self.compute_goal_alignment(vel, target)
         velocity_score = vel / self.max_vel
-        
+
         return (self.w_clearance * clearance_score +
                 self.w_goal * goal_score +
                 self.w_velocity * velocity_score)
-    
+
     def select_best_velocity(self, current_vel, obstacles, target, dt):
         """Select optimal velocity command"""
         v_min, v_max = self.compute_dynamic_window(current_vel, dt)
-        
+
         best_score = -float('inf')
         best_vel = current_vel
-        
+
         # Sample velocity space
         for v in np.linspace(v_min, v_max, 20):
             for w in np.linspace(-self.max_angular, self.max_angular, 20):
@@ -400,7 +406,7 @@ class DynamicWindowApproach:
                 if score > best_score:
                     best_score = score
                     best_vel = (v, w)
-        
+
         return best_vel
 ```
 
@@ -412,12 +418,12 @@ class PotentialFieldPlanner:
     Obstacle avoidance using artificial potential fields.
     Attractive force to goal, repulsive force from obstacles.
     """
-    
+
     def __init__(self, k_att=1.0, k_rep=10.0, influence_distance=2.0):
         self.k_att = k_att  # Attractive gain
         self.k_rep = k_rep  # Repulsive gain
         self.d_influence = influence_distance
-    
+
     def attractive_force(self, robot_pos, goal_pos):
         """Compute attractive force toward goal"""
         diff = goal_pos - robot_pos
@@ -425,46 +431,46 @@ class PotentialFieldPlanner:
         if distance < 0.01:
             return np.zeros(2)
         return self.k_att * diff / distance
-    
+
     def repulsive_force(self, robot_pos, obstacle_pos):
         """Compute repulsive force from obstacle"""
         diff = robot_pos - obstacle_pos
         distance = np.linalg.norm(diff)
-        
+
         if distance > self.d_influence:
             return np.zeros(2)
-        
+
         if distance < 0.01:
             distance = 0.01  # Avoid division by zero
-        
+
         magnitude = self.k_rep * (1/distance - 1/self.d_influence) / (distance**2)
         return magnitude * diff / distance
-    
+
     def compute_velocity(self, robot_state, goal, obstacles):
         """Compute velocity command using potential fields"""
         robot_pos = np.array([robot_state.x, robot_state.y])
         goal_pos = np.array([goal.x, goal.y])
-        
+
         # Attractive force
         f_att = self.attractive_force(robot_pos, goal_pos)
-        
+
         # Repulsive forces
         f_rep = np.zeros(2)
         for obs in obstacles:
             obs_pos = np.array([obs.x, obs.y])
             f_rep += self.repulsive_force(robot_pos, obs_pos)
-        
+
         # Total force
         f_total = f_att + f_rep
-        
+
         # Convert to velocity command
         desired_heading = np.arctan2(f_total[1], f_total[0])
         heading_error = desired_heading - robot_state.theta
-        
+
         # Normalize to [-π, π]
-        heading_error = np.arctan2(np.sin(heading_error), 
+        heading_error = np.arctan2(np.sin(heading_error),
                                   np.cos(heading_error))
-        
+
         return ControlCommand(
             linear=min(np.linalg.norm(f_total), self.max_vel),
             angular=2.0 * heading_error,
@@ -481,26 +487,26 @@ class HybridController:
     Combines trajectory tracking with obstacle avoidance.
     Uses trajectory controller normally, switches to avoidance when needed.
     """
-    
+
     def __init__(self, trajectory_controller, avoidance_controller):
         self.traj_ctrl = trajectory_controller
         self.avoid_ctrl = avoidance_controller
         self.mode = "TRACKING"
-    
+
     def detect_obstacles(self, robot_state, sensor_data):
         """Detect obstacles from sensor data"""
         obstacles = []
         # Process LIDAR/camera data to extract obstacle positions
         return obstacles
-    
+
     def compute_control(self, robot_state, trajectory, obstacles, dt):
         """Compute control with obstacle avoidance"""
-        
+
         # Check for nearby obstacles
         min_obstacle_dist = self.get_min_obstacle_distance(
             robot_state, obstacles
         )
-        
+
         if min_obstacle_dist < self.danger_threshold:
             # Switch to avoidance mode
             self.mode = "AVOIDING"
@@ -524,59 +530,6 @@ class HybridController:
 2. **Integration Tests**: Multi-component interaction
 3. **Validation Tests**: Algorithm correctness verification
 4. **Performance Tests**: Speed and resource usage
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest tests/
-
-# Run specific test file
-pytest tests/test_path_smoother.py
-
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
-
-# Run performance tests
-pytest tests/test_performance.py -v
-```
-
-### Test Examples
-
-```python
-def test_cubic_spline_continuity():
-    """Test C² continuity of cubic spline"""
-    x = np.array([0, 1, 2, 3])
-    y = np.array([0, 1, 0, 1])
-    spline = CubicSpline(x, y)
-    
-    # Check continuity at knots
-    for i in range(1, len(x) - 1):
-        left_val = spline.interpolate(x[i] - 1e-6)
-        right_val = spline.interpolate(x[i] + 1e-6)
-        assert abs(left_val - right_val) < 1e-4
-
-def test_trajectory_velocity_profile():
-    """Test trapezoidal velocity profile"""
-    path = [Point2D(0, 0), Point2D(10, 0)]  # Straight line
-    traj = TrajectoryGenerator.generate_trajectory(
-        path, max_velocity=1.0, max_acceleration=0.5
-    )
-    
-    # Check velocity increases monotonically in accel phase
-    velocities = [p.v for p in traj[:len(traj)//2]]
-    assert all(velocities[i] <= velocities[i+1] 
-              for i in range(len(velocities)-1))
-```
-
-## 📈 Performance Metrics
-
-### Typical Performance
-
-- **Path Smoothing**: < 10ms for 100 waypoints
-- **Trajectory Generation**: < 5ms for 1000 points
-- **Control Computation**: < 1ms per iteration
-- **Simulation Update**: < 0.5ms per step
 
 ## 🛠️ AI Tools Used
 
