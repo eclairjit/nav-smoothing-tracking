@@ -1,6 +1,6 @@
 # Robot Path Smoothing & Trajectory Control System
 
-A production-grade implementation of path smoothing, trajectory generation, and control algorithms for differential drive robots, built entirely from scratch without external robotics libraries.
+An implementation of path smoothing, trajectory generation, and control algorithms for differential drive robots, built entirely from scratch without external robotics libraries.
 
 ## 🎯 Features
 
